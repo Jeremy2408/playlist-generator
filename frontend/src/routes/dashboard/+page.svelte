@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { supabase } from '$lib/supabaseClient';
   import { onMount } from 'svelte';
+  import { supabase } from '$lib/supabaseClient';
   import type { User } from '@supabase/supabase-js';
+  import { goto } from '$app/navigation';
 
   let user: User | null = null;
   let accessToken = '';
@@ -13,12 +14,13 @@
     const session = data.session;
 
     if (!session) {
-      window.location.href = '/login';
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
       return;
     }
 
     user = session.user;
-    // Spotify access token from the session
     accessToken = session.provider_token || session.access_token || '';
 
     if (!accessToken) {
@@ -44,7 +46,13 @@
 
   async function logout() {
     await supabase.auth.signOut();
-    window.location.href = '/login';
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login';
+    }
+  }
+
+  async function selectPlaylist(id: string) {
+    await goto(`/playlist/${id}`);
   }
 </script>
 
@@ -59,23 +67,25 @@
   {#if playlists.length > 0}
     <div class="mt-8 space-y-4">
       <h2 class="text-xl font-semibold text-center">Your Spotify Playlists</h2>
-<ul class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 mt-6">
-  {#each playlists as playlist}
- <li class="bg-white p-4 rounded shadow hover:shadow-lg transition text-center">
-      <img
-      src={playlist.images[0]?.url}
-      alt="cover"
-      class="w-32 h-32 object-cover rounded mx-auto mb-2"
-      style="width: 128px; height: 128px"
-
-    />
-
-      <p class="font-bold text-sm truncate">{playlist.name}</p>
-      <p class="text-xs text-gray-500">{playlist.tracks.total} tracks</p>
-    </li>
-  {/each}
-</ul>
-
+      <ul class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 mt-6">
+        {#each playlists as playlist}
+          <button
+            type="button"
+            on:click={() => selectPlaylist(playlist.id)}
+            class="cursor-pointer bg-white p-4 rounded shadow hover:shadow-lg transition text-center w-[160px] mx-auto focus:outline-none"
+            style="border: none; display: block;"
+          >
+            <img
+              src={playlist.images[0]?.url}
+              alt="cover"
+              class="w-32 h-32 object-cover rounded mx-auto mb-2"
+              style="width: 128px; height: 128px"
+            />
+            <p class="font-bold text-sm truncate">{playlist.name}</p>
+            <p class="text-xs text-gray-500">{playlist.tracks.total} tracks</p>
+          </button>
+        {/each}
+      </ul>
     </div>
   {:else if error}
     <p class="text-red-600 mt-4">{error}</p>

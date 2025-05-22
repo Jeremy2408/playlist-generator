@@ -1,6 +1,9 @@
 <script>
-  // Redirect to the login page on load
-  window.location.href = '/login';
+  import { onMount } from 'svelte';
+
+  onMount(() => {
+    window.location.href = '/login';
+  });
 </script>
 
 <noscript>
